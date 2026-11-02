@@ -13,18 +13,27 @@
 }
 
 .cell,
-.label {
+.label-col,
+.label-row {
 	border-right: 2px solid black;
 	border-bottom: 2px solid black;
 }
 
-.label {
+.label-col,
+.label-row {
 	padding: 0.75rem;
 	display: flex;
-	justify-content: center;
 	align-items: center;
 	text-align: left;
 	white-space: pre-line;
+}
+
+.label-col {
+	justify-content: center;
+}
+
+.label-row {
+	justify-content: flex-start;
 }
 
 .selected {
