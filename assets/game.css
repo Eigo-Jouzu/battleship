@@ -2,6 +2,7 @@
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 1rem;
+	margin-bottom: 1rem;
 }
 
 .board {
@@ -13,6 +14,7 @@
 }
 
 .cell,
+.table-corner,
 .label-col,
 .label-row {
 	border-right: 2px solid black;
@@ -36,8 +38,45 @@
 	justify-content: flex-start;
 }
 
-.selected {
+.selected-player {
 	background-color: hsla(0, 59%, 41%, 0.75);
+}
+
+.selected-opponent {
+	background-color: hsla(268, 59%, 41%, 0.75);
+}
+
+.ship {
+	display: flex;
+	margin-inline: auto;
+}
+
+.ship-square {
+	background-color: hsla(0, 0%, 0%, 0.75);
+	height: 3.5rem;
+	width: 3.5rem;
+}
+
+.ship-selected .ship-square {
+	background-color: hsla(234, 59%, 41%, 0.75);
+}
+
+.ship-placed {
+	background-color: hsl(235, 82%, 50%);
+}
+
+.hit {
+	background-color: hsla(0, 59%, 41%, 0.75);
+}
+
+.miss {
+	background-color: hsl(235, 40%, 83%);
+}
+
+.shipyard {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
 }
 
 .board-name {
