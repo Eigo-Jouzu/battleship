@@ -93,9 +93,9 @@ function selectPlayerCell() {
 				const shipIndex = this.dataset.shipIndex;
 				if (shipIndex !== undefined) {
 					removeShip(shipIndex);
-				} else { // If a ship is selected but the game hasn't started
-					placeShip(this);
 				}
+			} else { // If a ship is selected but the game hasn't started
+				placeShip(this);
 			}
 			break;
 		case "ready":
