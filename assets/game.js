@@ -30,7 +30,7 @@ const ships = [
 const GRID_SIZE = 7;
 
 // Game state variables
-let gameStarted = false;
+let gamePhase = "setup";
 let selectedShip = null;
 let isVertical = false;
 
@@ -87,15 +87,22 @@ function buildBoard(board) {
 
 // Mark player's ship locations and shots fired by opponent
 function selectPlayerCell() {
-	if (selectedShip === null && gameStarted === false) { // If there is no selected ship and the game hasn't started
-		const shipIndex = this.dataset.shipIndex;
-		if (shipIndex !== undefined) {
-			removeShip(shipIndex);
-		}
-	} else if (selectedShip !== null && gameStarted === false) { // If a ship is selected but the game hasn't started
-		placeShip(this);
-	} else if (gameStarted === true) { // If a ship is not selected but the game has started
-		receiveHit(this); // Check for a hit on player's ships and place the appropriate hit/miss marker on the player's board
+	switch (gamePhase) {
+		case "setup":
+			if (selectedShip === null) { // If there is no selected ship and the game hasn't started
+				const shipIndex = this.dataset.shipIndex;
+				if (shipIndex !== undefined) {
+					removeShip(shipIndex);
+				} else { // If a ship is selected but the game hasn't started
+					placeShip(this);
+				}
+			}
+			break;
+		case "ready":
+			break;
+		case "playing": // If a ship is not selected but the game has started
+			receiveHit(this); // Check for a hit on player's ships and place the appropriate hit/miss marker on the player's board
+			break;
 	}
 }
 
@@ -197,12 +204,12 @@ function restoreShip(index) {
 
 // Mark locations of shots against opponent
 function selectOpponentCell() {
-	if (gameStarted === false) { return; }
+	if (gamePhase === "setup") { return; }
 	this.classList.toggle("selected-opponent");
 }
 
 function updateReadyButton() {
-	const hasRemainingShips = shipyard.querySelector(".ship:not(.ship-used)");
+	const hasRemainingShips = shipyard.querySelector(".ship:not(.ship-used)") !== null;
 	readyButton.disabled = hasRemainingShips;
 }
 
@@ -215,6 +222,7 @@ function readyState() {
 	rotateButton.disabled = true;
 	resetButton.disabled = true;
 	readyButton.disabled = true;
+	gamePhase = "ready";
 }
 
 // Draw shipyard
@@ -242,7 +250,7 @@ function selectShip() {
 		return;
 	}
 
-	if (gameStarted === false) {
+	if (gamePhase === "setup") {
 		if (prevShip === null) {
 			this.classList.add("ship-selected");
 			selectedShip = Number(this.dataset.shipIndex);
