@@ -25,17 +25,35 @@ const ships = [
 		name: "Destroyer",
 		length: 2
 	}];
+
 // Max grid size
 const GRID_SIZE = 7;
 
+// Game state variables
 let gameStarted = false;
 let selectedShip = null;
 let isVertical = false;
 
-// Construct game board
+// Board selectors
 const boards = document.querySelectorAll(".board");
+const shipyard = document.querySelector(".shipyard");
+const playerBoard = document.querySelector(".player");
+const opponentBoard = document.querySelector(".opponent");
 
+// Buttons
+const rotateButton = document.querySelector(".button-rotate");
+const resetButton = document.querySelector(".button-reset");
+const readyButton = document.querySelector(".button-ready");
+
+function setUpButtons() {
+	rotateButton.addEventListener("click", rotateShip);
+	resetButton.addEventListener("click", resetBoard);
+	readyButton.addEventListener("click", readyState);
+}
+
+// Construct game board
 function buildBoard(board) {
+
 	for (let row = 0; row <= GRID_SIZE; row++) {
 		for (let col = 0; col <= GRID_SIZE; col++) {
 			const div = document.createElement("div");
@@ -70,7 +88,10 @@ function buildBoard(board) {
 // Mark player's ship locations and shots fired by opponent
 function selectPlayerCell() {
 	if (selectedShip === null && gameStarted === false) { // If there is no selected ship and the game hasn't started
-		return;
+		const shipIndex = this.dataset.shipIndex;
+		if (shipIndex !== undefined) {
+			removeShip(shipIndex);
+		}
 	} else if (selectedShip !== null && gameStarted === false) { // If a ship is selected but the game hasn't started
 		placeShip(this);
 	} else if (gameStarted === true) { // If a ship is not selected but the game has started
@@ -78,56 +99,100 @@ function selectPlayerCell() {
 	}
 }
 
+// Places the selected ship in the adjacent cells
+// For each ship, the length is defined from the `ships` array
+// Then the board is checked to make sure there is enough space for the ship
+// If so, the ship is drawn on the board
+// The ship is then removed from the tray so that it can't be placed again
 function placeShip(cell) {
-	// 1. Facts that don't change: start row, start column, the board, the ship's length
+	// Variables that don't change: start row, start column, the board, the ship's length
 	const startRow = Number(cell.dataset.row);
 	const startCol = Number(cell.dataset.col);
-	const playerBoard = document.querySelector(".player");
 	const shipLength = ships[selectedShip].length;
 
-	// 2. CHECK pass: for each square i of the ship
+	// CHECK pass: for each square i of the ship
 	//      work out this square's row and column (isVertical decides which one moves)
 	//      find its cell on the board
 	//      if there's no cell, or it already has a ship: return (nothing drawn)
+
 	for (let i = 0; i < shipLength; i++) {
-		let currentRow = startRow;
-		let currentCol = startCol;
-		if (isVertical) {
-			currentRow = startRow + i;
-		} else {
-			currentCol = startCol + i;
-		}
-
-		const selection = playerBoard.querySelector(`[data-row="${currentRow}"][data-col="${currentCol}"]`);
-
+		const selection = getShipCell(startRow, startCol, i, playerBoard);
 		if (selection === null || selection.classList.contains("ship-placed")) {
 			return;
 		}
 	}
 
-	// 3. DRAW pass: for each square i of the ship
+	// DRAW pass: for each square i of the ship
 	//      work out the row and column the same way
 	//      find the cell and add "ship-placed"
 	for (let i = 0; i < shipLength; i++) {
-		let currentRow = startRow;
-		let currentCol = startCol;
-		if (isVertical) {
-			currentRow = startRow + i;
-		} else {
-			currentCol = startCol + i;
-		}
-
-		const selection = playerBoard.querySelector(`[data-row="${currentRow}"][data-col="${currentCol}"]`);
+		const selection = getShipCell(startRow, startCol, i, playerBoard);
 		selection.classList.add("ship-placed");
+		selection.dataset.shipIndex = selectedShip;
 	}
+	markShipUsed();
+	updateReadyButton();
+}
 
-	// 4. Tidy up: remove the SELECTED ship from the tray, and set selectedShip back to "nothing"
-	document.querySelector(".ship-selected").remove(); // Remove the ship from the tray
+// Decide whether or not a hit was successful when a shot is fired
+function receiveHit(cell) {
+	cell.classList.toggle("selected-player");
+}
+
+// Finds the current cell when placing a ship
+// Takes the starting column number, starting row number, the current loop's `i`, and the game board's name as arguments
+// Checks for rotation so the cells are returned in the correct orientation 
+// Returns `selection` as a cell, or null if empty, with the current row and column
+function getShipCell(startRow, startCol, i, board) {
+	let currentRow = startRow;
+	let currentCol = startCol;
+
+	if (isVertical) {
+		currentRow = startRow + i;
+	} else {
+		currentCol = startCol + i;
+	}
+	const selection = board.querySelector(`[data-row="${currentRow}"][data-col="${currentCol}"]`);
+
+	return selection;
+}
+
+function rotateShip() {
+	isVertical = !isVertical;
+	rotateButton.classList.toggle("vertical", isVertical);
+}
+
+// Remove the SELECTED ship from the tray, and reset the ship selection to nothing
+function markShipUsed() {
+	const shipUsed = shipyard.querySelector(".ship-selected");
+	shipUsed.classList.remove("ship-selected");
+	shipUsed.classList.add("ship-used");
 	selectedShip = null;
 }
 
-function receiveHit(cell) {
-	cell.classList.toggle("selected-player");
+function clearCell(shipPlaced) {
+	shipPlaced.classList.remove("ship-placed");
+	shipPlaced.removeAttribute("data-ship-index");
+}
+
+function resetBoard() {
+	for (let i = 0; i <= (ships.length - 1); i++) {
+		removeShip(i);
+	}
+}
+
+// Remove the SELECTED ship from the board, and set selectedShip back to "nothing"
+function removeShip(index) {
+	const allShipsPlaced = playerBoard.querySelectorAll(`[data-ship-index="${index}"]`);
+	allShipsPlaced.forEach(clearCell);
+
+	restoreShip(index);
+}
+
+function restoreShip(index) {
+	const shipUsed = shipyard.querySelector(`[data-ship-index="${index}"]`);
+	shipUsed.classList.remove("ship-used");
+	updateReadyButton();
 }
 
 // Mark locations of shots against opponent
@@ -136,17 +201,28 @@ function selectOpponentCell() {
 	this.classList.toggle("selected-opponent");
 }
 
-// Draw game board
-boards.forEach(buildBoard);
+function updateReadyButton() {
+	const hasRemainingShips = shipyard.querySelector(".ship:not(.ship-used)");
+	readyButton.disabled = hasRemainingShips;
+}
+
+function readyState() {
+	const opponentBoardTitle = document.querySelector(".board-name-opponent");
+
+	shipyard.classList.add("hidden");
+	opponentBoard.classList.remove("hidden");
+	opponentBoardTitle.textContent = "Opponent's Game Board";
+	rotateButton.disabled = true;
+	resetButton.disabled = true;
+	readyButton.disabled = true;
+}
 
 // Draw shipyard
-const shipyard = document.querySelector(".shipyard");
-
 function buildShipyard(shipyard) {
 	for (let shipCount = 0; shipCount < ships.length; shipCount++) {
 		const shipDiv = document.createElement("div");
 		shipDiv.classList.add("ship");
-		shipDiv.dataset.ship = shipCount;
+		shipDiv.dataset.shipIndex = shipCount;
 		shipDiv.addEventListener("click", selectShip);
 
 		for (let i = 0; i < ships[shipCount].length; i++) {
@@ -161,17 +237,32 @@ function buildShipyard(shipyard) {
 
 // Toggle ship selection
 function selectShip() {
-	const prevShip = document.querySelector(".ship-selected");
+	const prevShip = shipyard.querySelector(".ship-selected");
+	if (this.classList.contains("ship-used")) {
+		return;
+	}
+
 	if (gameStarted === false) {
 		if (prevShip === null) {
 			this.classList.add("ship-selected");
-			selectedShip = Number(this.dataset.ship);
+			selectedShip = Number(this.dataset.shipIndex);
 		} else {
 			prevShip.classList.remove("ship-selected");
+			if (prevShip === this) {
+				selectedShip = null;
+				return;
+			}
 			this.classList.add("ship-selected");
-			selectedShip = Number(this.dataset.ship);
+			selectedShip = Number(this.dataset.shipIndex);
 		}
 	}
 }
 
+// Draw game boards
+boards.forEach(buildBoard);
+// Draw ship tray
 buildShipyard(shipyard);
+// Draw buttons with default settings
+setUpButtons();
+// Enable Ready button if all ships have been placed on the board
+updateReadyButton();

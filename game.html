@@ -10,14 +10,19 @@
 <body>
     <div class="boards">
         <div class="side">
-            <h2 class="board-name">Your Game Board</h2>
+            <h2 class="board-name-player">Your Game Board</h2>
             <div class="board player"></div>
         </div>
         <div class="side">
-            <h2 class="board-name">Opponent's Game Board</h2>
-            <div class="board opponent"></div>
+            <h2 class="board-name-opponent">Your Ships</h2>
+            <div class="board opponent hidden"></div>
+            <div class="shipyard"></div>
         </div>
     </div>
-    <div class="shipyard"></div>
+    <div class="button-wrapper">
+        <button class="button-rotate">&#128472;</button>
+        <button class="button-reset">&#8634;</button>
+        <button class="button-ready" disabled>&#9656;</button>
+    </div>
 </body>
 </html>
